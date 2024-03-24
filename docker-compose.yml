@@ -1,0 +1,39 @@
+version: "3.8"
+services:
+  redis:
+    image: redis:7.0.11-alpine
+  django:
+    container_name: django
+    build:
+      context: ./dcelery
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./dcelery:/usr/src/app
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+  celery:
+    container_name: celery
+    build:
+      context: ./dcelery
+    command: celery --app=dcelery worker -l INFO
+    volumes:
+      - ./dcelery:/usr/src/app
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+  celery-beat:
+    container_name: celery-beat
+    build:
+      context: ./dcelery
+    command: celery --app=dcelery beat -l INFO
+    volumes:
+      - ./dcelery:/usr/src/app
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
